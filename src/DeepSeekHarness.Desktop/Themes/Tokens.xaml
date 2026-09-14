@@ -1,0 +1,58 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ===== DeepSeek Harness design tokens (mirrors the official web UI dark theme) ===== -->
+
+    <!-- Backgrounds -->
+    <Color x:Key="BgBaseColor">#FF151517</Color>
+    <Color x:Key="BgSidebarColor">#FF1B1B1C</Color>
+    <Color x:Key="BgLayer1Color">#FF232324</Color>
+    <Color x:Key="BgLayer2Color">#FF2C2C2E</Color>
+    <Color x:Key="BgLayer3Color">#FF353638</Color>
+    <Color x:Key="BgHoverColor">#FF2C2C2E</Color>
+    <Color x:Key="BgActiveColor">#FF43454A</Color>
+
+    <SolidColorBrush x:Key="BgBase" Color="{StaticResource BgBaseColor}" />
+    <SolidColorBrush x:Key="BgSidebar" Color="{StaticResource BgSidebarColor}" />
+    <SolidColorBrush x:Key="BgLayer1" Color="{StaticResource BgLayer1Color}" />
+    <SolidColorBrush x:Key="BgLayer2" Color="{StaticResource BgLayer2Color}" />
+    <SolidColorBrush x:Key="BgLayer3" Color="{StaticResource BgLayer3Color}" />
+    <SolidColorBrush x:Key="BgHover" Color="#14FFFFFF" />
+    <SolidColorBrush x:Key="BgActive" Color="#24FFFFFF" />
+    <SolidColorBrush x:Key="BgNavActive" Color="{StaticResource BgActiveColor}" />
+
+    <!-- Borders -->
+    <SolidColorBrush x:Key="BorderL1" Color="#10FFFFFF" />
+    <SolidColorBrush x:Key="BorderL2" Color="#1FFFFFFF" />
+    <SolidColorBrush x:Key="BorderL3" Color="#29FFFFFF" />
+    <SolidColorBrush x:Key="BorderFocus" Color="#FF679EFE" />
+
+    <!-- Text -->
+    <SolidColorBrush x:Key="TextPrimary" Color="#FFF9FAFB" />
+    <SolidColorBrush x:Key="TextSecondary" Color="#FFCFD3D6" />
+    <SolidColorBrush x:Key="TextTertiary" Color="#FFADB2B8" />
+    <SolidColorBrush x:Key="TextCaption" Color="#FF81858C" />
+    <SolidColorBrush x:Key="TextDisabled" Color="#FF61656B" />
+
+    <!-- Brand / state -->
+    <SolidColorBrush x:Key="Brand" Color="#FF679EFE" />
+    <SolidColorBrush x:Key="BrandDeep" Color="#FF4176E6" />
+    <SolidColorBrush x:Key="BrandSoft" Color="#1F679EFE" />
+    <SolidColorBrush x:Key="Success" Color="#FF22C55E" />
+    <SolidColorBrush x:Key="SuccessSoft" Color="#1F22C55E" />
+    <SolidColorBrush x:Key="Error" Color="#FFEF4444" />
+    <SolidColorBrush x:Key="ErrorSoft" Color="#1FEF4444" />
+    <SolidColorBrush x:Key="Warn" Color="#FFF59E0B" />
+    <SolidColorBrush x:Key="WarnSoft" Color="#1FF59E0B" />
+
+    <!-- Typography -->
+    <FontFamily x:Key="UiFont">Microsoft YaHei UI, Segoe UI, PingFang SC, sans-serif</FontFamily>
+    <FontFamily x:Key="MonoFont">Cascadia Mono, Consolas, SF Mono, monospace</FontFamily>
+
+    <!-- Radii -->
+    <CornerRadius x:Key="RadiusSm">6</CornerRadius>
+    <CornerRadius x:Key="RadiusMd">10</CornerRadius>
+    <CornerRadius x:Key="RadiusLg">14</CornerRadius>
+    <CornerRadius x:Key="RadiusPill">999</CornerRadius>
+
+</ResourceDictionary>

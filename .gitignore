@@ -1,0 +1,11 @@
+# 构建产物与依赖
+app/
+src/**/bin/
+src/**/obj/
+runtime/node_modules/
+runtime/package-lock.json
+deepseek-harness/node_modules/
+deepseek-harness/lib/
+*.user
+.vs/
+.idea/

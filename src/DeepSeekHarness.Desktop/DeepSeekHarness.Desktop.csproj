@@ -1,0 +1,39 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <AssemblyName>DeepSeekHarness</AssemblyName>
+    <RootNamespace>DeepSeekHarness</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+    <Version>1.0.0</Version>
+    <Product>DeepSeek Harness Desktop</Product>
+    <Company>DeepSeek Harness Desktop</Company>
+    <Description>DeepSeek Harness 原生桌面客户端</Description>
+    <SatelliteResourceLanguages>en;zh-Hans</SatelliteResourceLanguages>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4191.47" />
+    <PackageReference Include="YamlDotNet" Version="18.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\app.ico" Condition="Exists('Assets\app.ico')" />
+    <EmbeddedResource Include="Assets\deepseek.svg" />
+  </ItemGroup>
+
+  <!-- 设置页插件:随应用内嵌,启动时释放到 %APPDATA% 并安装到 web profile -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\desktop-plugin\package.json" LogicalName="DeepSeekHarness.Desktop.desktop-plugin.package.json" />
+    <EmbeddedResource Include="..\..\desktop-plugin\index.js" LogicalName="DeepSeekHarness.Desktop.desktop-plugin.index.js" />
+    <EmbeddedResource Include="..\..\desktop-plugin\client.js" LogicalName="DeepSeekHarness.Desktop.desktop-plugin.client.js" />
+    <EmbeddedResource Include="..\..\desktop-plugin\cordis.patch.yml" LogicalName="DeepSeekHarness.Desktop.desktop-plugin.cordis.patch.yml" />
+  </ItemGroup>
+
+</Project>

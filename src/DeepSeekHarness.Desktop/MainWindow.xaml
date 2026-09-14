@@ -1,0 +1,29 @@
+<Window x:Class="DeepSeekHarness.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
+        Title="DeepSeek Harness"
+        Width="1360" Height="880" MinWidth="900" MinHeight="600"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource BgBase}"
+        FontFamily="{StaticResource UiFont}"
+        TextOptions.TextFormattingMode="Display"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True">
+
+    <Grid>
+        <!-- DeepSeek Harness 官方页面:整窗即页面;加载/错误状态同样由页面渲染 -->
+        <wv2:WebView2 x:Name="Web" />
+
+        <!-- WebView2 初始化失败时的最小回退界面 -->
+        <Grid x:Name="FallbackState" Visibility="Collapsed" Background="{StaticResource BgBase}">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="460">
+                <TextBlock x:Name="FallbackTitle" Text="无法初始化内嵌浏览器" Style="{StaticResource SectionTitle}"
+                           HorizontalAlignment="Center" FontSize="16" />
+                <TextBlock x:Name="FallbackText" Style="{StaticResource BodyText}" TextAlignment="Center"
+                           Foreground="{StaticResource TextCaption}" Margin="0,10,0,0"
+                           Text="请确认已安装 Microsoft Edge WebView2 Runtime,然后重启应用。" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>

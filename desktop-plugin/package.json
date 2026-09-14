@@ -1,0 +1,24 @@
+{
+  "name": "dsh-desktop-tools",
+  "version": "1.0.0",
+  "description": "DeepSeek Harness Desktop 桌面工具:在设置页内管理插件、服务与日志",
+  "type": "module",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "cordis.patch.yml"
+  ],
+  "dsh": {
+    "client": {
+      "platform": "web"
+    },
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}
