@@ -9,3 +9,4 @@ deepseek-harness/lib/
 *.user
 .vs/
 .idea/
+.dsh-icon-preview/

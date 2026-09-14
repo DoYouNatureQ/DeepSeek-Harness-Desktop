@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text.Json;
@@ -40,12 +41,43 @@ public partial class MainWindow : Window
         Loaded += OnLoaded;
         Closing += OnClosing;
         SourceInitialized += OnSourceInitialized;
+
+        // 启动阶段拆分计时,便于定位耗时环节(见 app.log)。
+        _startupWatch = Stopwatch.StartNew();
+        _lastPhase = _startupWatch.Elapsed;
+        App.WriteLog("startup: window ctor begin");
+    }
+
+    private readonly Stopwatch _startupWatch;
+    private TimeSpan _lastPhase;
+
+    /// <summary>记录一次启动阶段耗时(距上次阶段的增量与距启动的累计)。</summary>
+    private void MarkPhase(string phase)
+    {
+        var now = _startupWatch.Elapsed;
+        App.WriteLog($"startup: {phase} +{(now - _lastPhase).TotalMilliseconds:N0}ms (累计 {now.TotalMilliseconds:N0}ms)");
+        _lastPhase = now;
+    }
+
+    /// <summary>后台确保「桌面工具」插件就绪;任何失败都只记录日志,不阻断服务启动。</summary>
+    private async Task EnsureDesktopPluginAsync()
+    {
+        try
+        {
+            var (ok, message) = await DesktopPluginInstaller.EnsureInstalledAsync(_host);
+            _host.LogApp(message, !ok);
+        }
+        catch (Exception ex)
+        {
+            _host.LogApp($"桌面工具插件准备失败: {ex.Message}", true);
+        }
     }
 
     // ===================== 生命周期 =====================
 
     private async void OnLoaded(object sender, RoutedEventArgs e)
     {
+        MarkPhase("window loaded");
         if (_host.Settings is not null)
         {
             _theme.Changed += ApplyTheme;
@@ -54,6 +86,7 @@ public partial class MainWindow : Window
         ApplyTitleBarTheme();
 
         var ready = await InitializeWebViewAsync();
+        MarkPhase(ready ? "webview2 ready" : "webview2 failed");
 
         if (!ready)
         {
@@ -67,24 +100,24 @@ public partial class MainWindow : Window
         }
 
         ShowLoadingPage("正在启动 DeepSeek Harness…", "正在准备本地运行时,首次启动可能需要数十秒。", LoadingKind.Starting);
+        MarkPhase("loading page shown");
 
-        try
-        {
-            var (ok, message) = await DesktopPluginInstaller.EnsureInstalledAsync(_host);
-            _host.LogApp(message, !ok);
-        }
-        catch (Exception ex)
-        {
-            _host.LogApp($"桌面工具插件准备失败: {ex.Message}", true);
-        }
-
-        await _host.EnsureDefaultThemeAsync();
-        ApplyTitleBarTheme();
+        // 插件安装检查与 dsh 服务启动互不依赖:并行执行,避免让「检查插件」占用服务启动的关键路径。
+        // 正常情况下检查是纯文件比对(毫秒级);仅当插件缺失或版本变更时才会真正触发 pnpm 安装,失败也不影响服务。
+        var pluginTask = EnsureDesktopPluginAsync();
 
         if (_host.Config.AutoStartServer)
         {
             await _host.StartServerAsync();
         }
+        MarkPhase("server ready");
+
+        await pluginTask;
+        MarkPhase("desktop plugin ensured");
+
+        await _host.EnsureDefaultThemeAsync();
+        ApplyTitleBarTheme();
+        MarkPhase("default theme ensured");
         UpdateStatus();
     }
 
@@ -329,12 +362,12 @@ public partial class MainWindow : Window
 
         return "<!doctype html><html data-theme=\"" + (dark ? "dark" : "light") + "\"><head><meta charset=\"utf-8\">" +
                "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>DeepSeek Harness</title><style>" +
-               ":root{--bg:#151517;--card:#2c2c2e;--border:rgba(255,255,255,.12);--text:#f9fafb;--muted:#81858c;--brand:#4176e6;}" +
-               "html[data-theme=light]{--bg:#f9fafb;--card:#ffffff;--border:rgba(0,0,0,.1);--text:#0f0f0f;--muted:#7f8287;--brand:#4176e6;}" +
+               ":root{--bg:#151517;--card:#2c2c2e;--border:rgba(255,255,255,.12);--text:#f9fafb;--muted:#81858c;--brand:#4176e6;--logoBorder:rgba(255,255,255,.18);}" +
+               "html[data-theme=light]{--bg:#f9fafb;--card:#ffffff;--border:rgba(0,0,0,.1);--text:#0f0f0f;--muted:#7f8287;--brand:#4176e6;--logoBorder:rgba(0,0,0,.1);}" +
                "html,body{height:100%;margin:0;}body{display:flex;align-items:center;justify-content:center;background:var(--bg);color:var(--text);" +
                "font-family:'Segoe UI','Microsoft YaHei UI','PingFang SC',sans-serif;transition:background .2s ease,color .2s ease;}" +
                ".wrap{display:flex;flex-direction:column;align-items:center;max-width:460px;padding:0 32px;text-align:center;}" +
-               ".logo{width:56px;height:56px;border-radius:16px;background:var(--brand);display:flex;align-items:center;justify-content:center;margin-bottom:20px;}" +
+               ".logo{width:56px;height:56px;border-radius:16px;background:#fff;border:1px solid var(--logoBorder);display:flex;align-items:center;justify-content:center;margin-bottom:20px;}" +
                ".spinner{width:22px;height:22px;border:2px solid var(--border);border-top-color:var(--brand);border-radius:50%;animation:spin 1s linear infinite;margin-bottom:20px;}" +
                "@keyframes spin{to{transform:rotate(360deg)}}" +
                "h1{font-size:16px;font-weight:600;margin:0 0 10px;}p{font-size:12.5px;color:var(--muted);line-height:1.8;margin:0;word-break:break-all;}" +
@@ -353,7 +386,7 @@ public partial class MainWindow : Window
         .Replace(">", "&gt;")
         .Replace("\"", "&quot;");
 
-    /// <summary>加载页上的 DeepSeek 鲸鱼标志(白色,置于蓝色圆角方块内)。</summary>
+    /// <summary>加载页上的 DeepSeek 鲸鱼标志(品牌蓝,置于白色圆角方块内)。</summary>
     private static string LoadWhaleSvg()
     {
         try
@@ -365,9 +398,10 @@ public partial class MainWindow : Window
             var svg = reader.ReadToEnd();
             svg = System.Text.RegularExpressions.Regex.Replace(svg, "<style>.*?</style>", string.Empty,
                 System.Text.RegularExpressions.RegexOptions.Singleline);
-            svg = svg.Replace("fill=\"#4D6BFE\"", "fill=\"#fff\"");
-            svg = svg.Replace("width=\"50.000000\" height=\"50.000000\"", "width=\"26\" height=\"26\"");
-            svg = svg.Replace("width=\"50\" height=\"50\"", "width=\"26\" height=\"26\"");
+            // 源文件鲸鱼为黑色,这里统一染成品牌蓝
+            svg = svg.Replace("fill=\"#000\"", "fill=\"#4D6BFE\"");
+            svg = svg.Replace("width=\"50.000000\" height=\"50.000000\"", "width=\"30\" height=\"30\"");
+            svg = svg.Replace("width=\"50\" height=\"50\"", "width=\"30\" height=\"30\"");
             return svg;
         }
         catch

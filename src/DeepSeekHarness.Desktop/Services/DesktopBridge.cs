@@ -23,15 +23,25 @@ public sealed class DesktopBridge
 
     public async Task<BridgeResult> HandleAsync(string action, JsonElement message)
     {
+        var sw = Stopwatch.StartNew();
         try
         {
             var data = await DispatchAsync(action, message).ConfigureAwait(false);
+            LogIfSlow(action, sw.Elapsed);
             return new BridgeResult(true, data, null);
         }
         catch (Exception ex)
         {
+            LogIfSlow(action, sw.Elapsed);
             return new BridgeResult(false, null, ex.Message);
         }
+    }
+
+    /// <summary>记录页面桥接调用耗时,便于定位「某个操作要等一会」的具体环节。</summary>
+    private void LogIfSlow(string action, TimeSpan elapsed)
+    {
+        if (elapsed.TotalMilliseconds < 300) return;
+        _host.LogApp($"[耗时] {action}: {elapsed.TotalMilliseconds:N0}ms");
     }
 
     private async Task<object?> DispatchAsync(string action, JsonElement m)

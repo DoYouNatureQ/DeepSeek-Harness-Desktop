@@ -1,4 +1,4 @@
-# [DeepSeek Harness Desktop](https://github.com/DoYouNatureQ/DeepSeek-Harness-Desktop)
+# DeepSeek Harness Desktop
 
 基于 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)(`dsh`)的原生 Windows 桌面客户端。
 
@@ -16,6 +16,7 @@
 | 官方页面(整窗) | 会话、工具调用、审批、diff、工作区、计划模式、子代理等全部官方能力 |
 | 设置 → 模型 | 配置 DeepSeek API Key(write-only)、切换官方模型、自定义 API 地址 —— 官方原生设置 |
 | 设置 → 插件 | 官方插件配置与运行时插件列表 |
+| 设置 → **使用统计** | 由本客户端注入:每日 Token 贡献图(类 GitHub 提交图)、今日 / 7 天 / 30 天 / 累计用量、用量最多的会话 |
 | 设置 → **桌面工具** | 由本客户端注入:插件安装 / 启用停用 / 移除、服务进程控制、监听端口、运行日志、数据目录 |
 | 窗口与加载页 | 深色 / 浅色跟随 Harness 的「外观」设置(含系统主题),标题栏同步 |
 
@@ -45,6 +46,27 @@
 
 ---
 
+## 使用统计(设置页内)
+
+在 **设置 → 使用统计** 中查看本机的模型用量,数据全部在页面内由本机会话日志汇总,**不上传任何内容**:
+
+- **每日 Token 贡献图**:按周 × 星期排布,颜色深浅表示当天消耗的 Token;可切换近 13 / 26 / 52 周。
+  鼠标悬停任意方格显示当天明细(输入 / 输出 / 缓存读 / 步数),点击上方「重新扫描」可强制重算。
+- **汇总卡片**:今日、近 7 天、近 30 天、累计的 Token 总量与提问次数、模型步数。
+- **用量最多的会话**:按 Token 总量排序取前 8 个会话,显示标题、最后活动时间与用量。
+
+口径与缓存:
+
+- 统计对象是每条 `assistant/message`(以及未提交的 `assistant/attempt`)上报的 token 用量,
+  即 `输入 + 输出 + 缓存读 + 缓存写`;按事件落盘时间归入**本地自然日**,与 Harness 自身的 token-meter 口径一致
+  (同一 `(turn, step)` 的重复上报只计最后一次,重试消耗照常累计)。
+- 数据经 Harness 会话接口(`session/list`、`session/follow`、`session/page`)读取,结果按
+  「会话 id + 最后活动时间」缓存在浏览器 `localStorage`,未变化的会话不会重复扫描。
+- 需要父会话地址的委派(子代理)会话在缺少身份投影时会被跳过,页面底部会注明跳过数量;
+  单个超长日志达到分页上限时同样会标注。
+
+---
+
 ## 桌面工具(设置页内)
 
 在 **设置 → 桌面工具** 中:
@@ -65,19 +87,21 @@
 Deepseek Harness Desktop/
 ├── app/                          # 已发布的原生客户端(self-contained)
 ├── runtime/                      # DeepSeek Harness 运行时(npm 安装 @deepseek-ai/dsh)
-├── desktop-plugin/               # 「桌面工具」设置页插件(手写客户端 bundle,无需构建)
+├── desktop-plugin/               # 设置页插件(手写客户端 bundle,无需构建)
 │   ├── package.json              # dsh.client(platform: web)+ dsh.bundle.patch
 │   ├── index.js                  # Host 半:空实现(仅为 Loader 行可解析)
-│   ├── client.js                 # 浏览器半:注册 settings.section 并渲染工具面板
+│   ├── client.js                 # 浏览器半:注册「使用统计」与「桌面工具」两个 settings.section
 │   └── cordis.patch.yml          # 插入 desktop-tools 行
 ├── src/DeepSeekHarness.Desktop/  # WPF 客户端源码(C# / .NET 10)
 │   ├── Models/                   # 客户端配置与模型目录
 │   ├── Services/                 # 进程管理、WebView 消息桥、配置、插件安装器、主题监听
 │   ├── Themes/                   # dsh 设计 token 与控件样式(加载页/回退界面使用)
-│   └── Assets/                   # 应用图标(与手机 App 一致的蓝底白鲸)与官方 logo
+│   └── Assets/                   # 应用图标(与手机 App 一致的白底蓝鲸)与官方 logo
 ├── scripts/
 │   ├── build.ps1                 # 一键构建 + 自检
-│   └── make-icon.ps1             # 由 Assets\deepseek.svg 生成多尺寸 app.ico
+│   └── make-icon.ps1             # 由 Assets\deepseek.svg 生成多尺寸 app.ico(白底 + 品牌蓝鲸)
+│                                 #   可选参数 -Background/-Border/-WhaleColor/-PreviewDir
+│                                 #   运行后在 .dsh-icon-preview\ 生成 256px 预览图与多尺寸拼版
 ├── deepseek-harness/             # 上游源码(仅供查阅,不参与构建与运行)
 └── README.md
 ```
@@ -85,6 +109,12 @@ Deepseek Harness Desktop/
 > 构建产物 `src/DeepSeekHarness.Desktop/bin`(publish 暂存)与 `obj`(MSBuild 中间产物)
 > 均为可再生成的临时文件,`app/` 才是最终交付目录;两者可随时删除以节省约 138 MB 空间。
 > `scripts/*.ps1` 带 UTF-8 BOM,以确保 Windows PowerShell 5.1 下中文注释正确解析。
+>
+> `desktop-plugin/*` 以**内嵌资源**打进 `DeepSeekHarness.exe`,启动时释放到
+> `%APPDATA%\DeepSeekHarnessDesktop\desktop-plugin` 并 link 进 web profile。
+> 因此改完插件源码后:运行中的应用会在约 0.5 秒内热重载 `client.js`(改 `index.js` 需重启服务),
+> 但要让改动**在下次启动后仍然存在**,必须关闭应用并重新运行 `scripts\build.ps1`——
+> 否则下次启动会用旧的内嵌资源覆盖 `%APPDATA%` 下的插件目录。
 
 ---
 
@@ -95,7 +125,7 @@ Deepseek Harness Desktop/
 │  WebView2(整窗)                                                                │
 │    └── DeepSeek Harness 官方页面 http://127.0.0.1:<port>/                       │
 │          ├── 原生设置:通用 / 模型 / 插件 / Agent 预设                             │
-│          └── 桌面工具(本客户端插件)──┐                                          │
+│          └── 本客户端插件:使用统计(本地会话日志汇总) / 桌面工具 ──┐              │
 │                                      │ WebView2 消息桥 {dsh:'desktop', req, ...} │
 │  ┌───────────────────────────────────▼──────────────────────────────────────┐  │
 │  │ 进程管理(启动/停止/重启、stdout/stderr)  ·  RPC 客户端(Cookie 鉴权)      │  │

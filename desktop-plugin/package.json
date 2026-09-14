@@ -1,7 +1,7 @@
 {
   "name": "dsh-desktop-tools",
   "version": "1.0.0",
-  "description": "DeepSeek Harness Desktop 桌面工具:在设置页内管理插件、服务与日志",
+  "description": "DeepSeek Harness Desktop 桌面设置页:使用统计(每日 Token 贡献图)与桌面工具(插件、服务与日志)",
   "type": "module",
   "main": "index.js",
   "exports": {
